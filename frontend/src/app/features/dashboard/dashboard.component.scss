@@ -1,0 +1,24 @@
+h2 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.metric-value {
+  font-size: clamp(1.25rem, 1.7vw, 1.75rem);
+  font-weight: 800;
+}
+
+.list-row {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.list-row:last-child {
+  border-bottom: 0;
+}
+

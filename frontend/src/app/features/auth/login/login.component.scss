@@ -1,0 +1,35 @@
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(rgba(246, 247, 244, 0.78), rgba(246, 247, 244, 0.96)),
+    url("https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=80") center / cover;
+}
+
+.login-panel {
+  width: min(100%, 420px);
+  padding: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--app-border);
+  box-shadow: 0 24px 70px rgba(32, 39, 33, 0.18);
+}
+
+.brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--app-accent);
+  color: #fff;
+  font-weight: 800;
+}
+
+h1 {
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+

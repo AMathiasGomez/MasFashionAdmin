@@ -1,0 +1,76 @@
+:root {
+  --app-bg: #f6f7f4;
+  --app-surface: #ffffff;
+  --app-border: #dee4dc;
+  --app-text: #202721;
+  --app-muted: #6d776e;
+  --app-accent: #2f6f64;
+  --app-accent-dark: #24584f;
+  --app-warm: #c87c5a;
+  --app-gold: #b9964a;
+  --app-danger: #b94d4d;
+  --sidebar-width: 272px;
+}
+
+* {
+  letter-spacing: 0;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--app-text);
+  background: var(--app-bg);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--app-accent);
+  --bs-btn-border-color: var(--app-accent);
+  --bs-btn-hover-bg: var(--app-accent-dark);
+  --bs-btn-hover-border-color: var(--app-accent-dark);
+}
+
+.text-muted {
+  color: var(--app-muted) !important;
+}
+
+.app-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+}
+
+.metric-card {
+  min-height: 112px;
+}
+
+.table {
+  --bs-table-bg: transparent;
+}
+
+.form-control,
+.form-select,
+.btn {
+  border-radius: 6px;
+}
+
+.page-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 991.98px) {
+  :root {
+    --sidebar-width: 0px;
+  }
+}
+

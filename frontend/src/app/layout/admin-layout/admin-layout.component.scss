@@ -1,0 +1,25 @@
+.admin-shell {
+  min-height: 100vh;
+  display: flex;
+}
+
+.admin-main {
+  width: 100%;
+  min-width: 0;
+  margin-left: var(--sidebar-width);
+}
+
+.admin-content {
+  padding: 24px;
+}
+
+@media (max-width: 991.98px) {
+  .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 18px;
+  }
+}
+
