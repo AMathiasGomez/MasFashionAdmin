@@ -13,7 +13,18 @@ const startServer = async () => {
 
     scheduledReportsJob.start();
   } catch (error) {
-    console.error('Failed to start API:', error.message);
+    console.error('Failed to start API:', error.message || error.code || error);
+
+    if (Array.isArray(error.errors)) {
+      error.errors.forEach((subError, index) => {
+        console.error(`  cause[${index}]:`, subError.message || subError.code || subError);
+      });
+    }
+
+    if (error.stack) {
+      console.error(error.stack);
+    }
+
     process.exit(1);
   }
 };
