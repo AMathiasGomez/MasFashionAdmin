@@ -1,16 +1,35 @@
 const mysql = require('mysql2/promise');
 const env = require('./env');
 
+const resolveDbConfig = () => {
+  if (!env.db.url) {
+    return {
+      host: env.db.host,
+      port: env.db.port,
+      user: env.db.user,
+      password: env.db.password,
+      database: env.db.database
+    };
+  }
+
+  const parsed = new URL(env.db.url);
+
+  return {
+    host: parsed.hostname,
+    port: Number(parsed.port || 3306),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    // This project always uses its own "clothing_admin" database regardless of
+    // the default database name embedded in the connection URL.
+    database: env.db.database
+  };
+};
+
 const pool = mysql.createPool({
-  host: env.db.host,
-  port: env.db.port,
-  user: env.db.user,
-  password: env.db.password,
-  database: env.db.database,
+  ...resolveDbConfig(),
   namedPlaceholders: true,
   waitForConnections: true,
   connectionLimit: env.db.connectionLimit,
-  namedPlaceholders: true,
   decimalNumbers: true
 });
 
