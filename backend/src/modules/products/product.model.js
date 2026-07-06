@@ -3,6 +3,8 @@ const { paginationClause } = require('../../utils/sql-pagination');
 
 const productFields = `
   p.id,
+  p.group_id AS groupId,
+  pg.name AS groupName,
   p.category_id AS categoryId,
   c.name AS categoryName,
   p.supplier_id AS supplierId,
@@ -31,6 +33,7 @@ const baseSelect = `
   FROM products p
   JOIN categories c ON c.id = p.category_id
   LEFT JOIN suppliers s ON s.id = p.supplier_id
+  LEFT JOIN product_groups pg ON pg.id = p.group_id
 `;
 
 const execute = async (db, sql, params = {}) => {
@@ -50,6 +53,11 @@ const buildWhere = (filters = {}) => {
   if (filters.categoryId) {
     where.push('p.category_id = :categoryId');
     params.categoryId = Number(filters.categoryId);
+  }
+
+  if (filters.groupId) {
+    where.push('p.group_id = :groupId');
+    params.groupId = Number(filters.groupId);
   }
 
   if (filters.active !== undefined) {
@@ -121,10 +129,54 @@ const findById = async (id, db = pool) => {
   };
 };
 
+const findGroupByNameAndCategory = async (name, categoryId, db = pool) => {
+  const rows = await execute(
+    db,
+    `SELECT id FROM product_groups WHERE name = :name AND category_id = :categoryId LIMIT 1`,
+    { name, categoryId }
+  );
+
+  return rows[0] || null;
+};
+
+const createGroup = async ({ name, categoryId, supplierId, description }, db = pool) => {
+  const result = await execute(
+    db,
+    `INSERT INTO product_groups (category_id, supplier_id, name, description)
+     VALUES (:categoryId, :supplierId, :name, :description)`,
+    { categoryId, supplierId: supplierId || null, name, description: description || null }
+  );
+
+  return result.insertId;
+};
+
+const findOrCreateGroup = async ({ name, categoryId, supplierId, description }, db = pool) => {
+  const existing = await findGroupByNameAndCategory(name, categoryId, db);
+
+  if (existing) {
+    return existing.id;
+  }
+
+  return createGroup({ name, categoryId, supplierId, description }, db);
+};
+
 const create = async (payload, db = pool) => {
+  const groupId =
+    payload.groupId ||
+    (await findOrCreateGroup(
+      {
+        name: payload.name,
+        categoryId: payload.categoryId,
+        supplierId: payload.supplierId,
+        description: payload.description
+      },
+      db
+    ));
+
   const result = await execute(
     db,
     `INSERT INTO products (
+       group_id,
        category_id,
        supplier_id,
        name,
@@ -138,6 +190,7 @@ const create = async (payload, db = pool) => {
        active
      )
      VALUES (
+       :groupId,
        :categoryId,
        :supplierId,
        :name,
@@ -151,6 +204,7 @@ const create = async (payload, db = pool) => {
        :active
      )`,
     {
+      groupId,
       categoryId: payload.categoryId,
       supplierId: payload.supplierId || null,
       name: payload.name,
@@ -173,6 +227,7 @@ const update = async (id, payload, db = pool) => {
     db,
     `UPDATE products
      SET
+       group_id = :groupId,
        category_id = :categoryId,
        supplier_id = :supplierId,
        name = :name,
@@ -185,6 +240,7 @@ const update = async (id, payload, db = pool) => {
      WHERE id = :id`,
     {
       id,
+      groupId: payload.groupId || null,
       categoryId: payload.categoryId,
       supplierId: payload.supplierId || null,
       name: payload.name,
@@ -225,10 +281,48 @@ const replaceImages = async (productId, images, db = pool) => {
   }
 };
 
+const findGrouped = async (filters = {}, db = pool) => {
+  const rows = await findAll({ ...filters, limit: 500, offset: 0 }, db);
+
+  const groups = new Map();
+
+  for (const row of rows) {
+    const key = row.groupId || `single-${row.id}`;
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        groupId: row.groupId,
+        groupName: row.groupName || row.name,
+        categoryId: row.categoryId,
+        categoryName: row.categoryName,
+        variants: []
+      });
+    }
+
+    groups.get(key).variants.push(row);
+  }
+
+  return [...groups.values()].map((group) => {
+    const prices = group.variants.map((v) => Number(v.salePrice));
+    const stock = group.variants.reduce((sum, v) => sum + Number(v.stock), 0);
+
+    return {
+      ...group,
+      variantCount: group.variants.length,
+      totalStock: stock,
+      minPrice: Math.min(...prices),
+      maxPrice: Math.max(...prices),
+      hasLowStock: group.variants.some((v) => Number(v.isLowStock) === 1)
+    };
+  });
+};
+
 module.exports = {
   findAll,
   countAll,
   findById,
+  findGrouped,
+  findOrCreateGroup,
   create,
   update,
   updateStatus,

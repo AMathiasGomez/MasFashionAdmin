@@ -1,17 +1,18 @@
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { DatePipe, NgFor } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { PaginatedResult } from '../../core/models/api-response.model';
 import { InventoryMovement, Product } from '../../core/models/business.model';
 import { ApiService } from '../../core/services/api.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [DatePipe, NgFor, NgIf, PageHeaderComponent, ReactiveFormsModule, StatusBadgeComponent],
+  imports: [DatePipe, NgFor, ModalComponent, PageHeaderComponent, ReactiveFormsModule, StatusBadgeComponent],
   template: `
     <app-page-header title="Inventario" subtitle="Movimientos, responsables y trazabilidad de stock">
       <button class="btn btn-primary" type="button" (click)="showForm.set(!showForm())">
@@ -19,7 +20,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
       </button>
     </app-page-header>
 
-    <section class="app-card p-3 mb-3" *ngIf="showForm()">
+    <app-modal title="Nuevo movimiento" [open]="showForm()" (closed)="showForm.set(false)">
       <form class="row g-3" [formGroup]="form" (ngSubmit)="create()">
         <div class="col-md-5">
           <label class="form-label">Producto</label>
@@ -51,7 +52,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
           <input class="form-control" formControlName="reason">
         </div>
       </form>
-    </section>
+    </app-modal>
 
     <section class="app-card p-3">
       <div class="table-responsive">

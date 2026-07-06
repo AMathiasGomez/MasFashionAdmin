@@ -4,6 +4,7 @@ const authenticate = require('../../middlewares/auth.middleware');
 const asyncHandler = require('../../middlewares/async-handler.middleware');
 const validateRequest = require('../../middlewares/validate.middleware');
 const { authorizePermissions } = require('../../middlewares/role.middleware');
+const { auditLogger } = require('../../middlewares/audit.middleware');
 const productController = require('./product.controller');
 const productValidator = require('./product.validator');
 
@@ -15,6 +16,14 @@ router.get(
   productValidator.list,
   validateRequest,
   asyncHandler(productController.listProducts)
+);
+
+router.get(
+  '/groups',
+  authorizePermissions('products.read'),
+  productValidator.list,
+  validateRequest,
+  asyncHandler(productController.listGroupedProducts)
 );
 
 router.get(
@@ -30,6 +39,7 @@ router.post(
   authorizePermissions('products.manage'),
   productValidator.create,
   validateRequest,
+  auditLogger('create', 'product'),
   asyncHandler(productController.createProduct)
 );
 
@@ -38,6 +48,7 @@ router.put(
   authorizePermissions('products.manage'),
   productValidator.update,
   validateRequest,
+  auditLogger('update', 'product'),
   asyncHandler(productController.updateProduct)
 );
 
@@ -46,6 +57,7 @@ router.patch(
   authorizePermissions('products.manage'),
   productValidator.updateStatus,
   validateRequest,
+  auditLogger('status_change', 'product'),
   asyncHandler(productController.updateProductStatus)
 );
 
@@ -54,6 +66,7 @@ router.delete(
   authorizePermissions('products.manage'),
   productValidator.idParam,
   validateRequest,
+  auditLogger('delete', 'product'),
   asyncHandler(productController.deleteProduct)
 );
 

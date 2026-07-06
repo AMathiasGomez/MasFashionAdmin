@@ -1,16 +1,17 @@
-import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgFor } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { PaginatedResult } from '../../core/models/api-response.model';
 import { Product, Supplier, SupplyPurchase } from '../../core/models/business.model';
 import { ApiService } from '../../core/services/api.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-supplies',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, NgFor, NgIf, PageHeaderComponent, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, NgFor, ModalComponent, PageHeaderComponent, ReactiveFormsModule],
   template: `
     <app-page-header title="Insumos" subtitle="Compras de tela, cierres, botones, etiquetas y otros materiales">
       <button class="btn btn-primary" type="button" (click)="showForm.set(!showForm())">
@@ -18,7 +19,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
       </button>
     </app-page-header>
 
-    <section class="app-card p-3 mb-3" *ngIf="showForm()">
+    <app-modal title="Nueva compra de insumos" [open]="showForm()" (closed)="showForm.set(false)">
       <form [formGroup]="form" (ngSubmit)="create()" class="d-grid gap-3">
         <div class="row g-3">
           <div class="col-md-4">
@@ -81,12 +82,12 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
           <button class="btn btn-primary" [disabled]="form.invalid">Guardar compra</button>
         </div>
       </form>
-    </section>
+    </app-modal>
 
     <section class="app-card p-3">
       <div class="table-responsive">
         <table class="table align-middle">
-          <thead><tr><th>Proveedor</th><th>Tipo</th><th>Cantidad</th><th>Costo unitario</th><th>Total</th><th>Fecha</th></tr></thead>
+          <thead><tr><th>Proveedor</th><th>Tipo</th><th>Cantidad</th><th>Costo unitario</th><th>Total</th><th>Fecha</th><th class="text-end">Acciones</th></tr></thead>
           <tbody>
             <tr *ngFor="let purchase of purchases()">
               <td class="fw-semibold">{{ purchase.supplierName }}</td>
@@ -95,6 +96,11 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
               <td>{{ purchase.unitCost | currency:'COP':'symbol':'1.0-0' }}</td>
               <td>{{ purchase.totalCost | currency:'COP':'symbol':'1.0-0' }}</td>
               <td>{{ purchase.purchaseDate | date:'mediumDate' }}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger" type="button" title="Eliminar" (click)="remove(purchase)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -166,6 +172,14 @@ export class SuppliesComponent {
       this.showForm.set(false);
       this.load();
     });
+  }
+
+  remove(purchase: SupplyPurchase): void {
+    if (!confirm('¿Eliminar esta compra de insumos?')) {
+      return;
+    }
+
+    this.api.delete(`/supplies/${purchase.id}`).subscribe(() => this.load());
   }
 
   private load(): void {

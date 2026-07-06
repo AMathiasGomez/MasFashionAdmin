@@ -4,6 +4,7 @@ const authenticate = require('../../middlewares/auth.middleware');
 const asyncHandler = require('../../middlewares/async-handler.middleware');
 const validateRequest = require('../../middlewares/validate.middleware');
 const { authorizePermissions } = require('../../middlewares/role.middleware');
+const { auditLogger } = require('../../middlewares/audit.middleware');
 const supplierController = require('./supplier.controller');
 const supplierValidator = require('./supplier.validator');
 
@@ -30,6 +31,7 @@ router.post(
   authorizePermissions('suppliers.manage'),
   supplierValidator.create,
   validateRequest,
+  auditLogger('create', 'supplier'),
   asyncHandler(supplierController.createSupplier)
 );
 
@@ -38,6 +40,7 @@ router.put(
   authorizePermissions('suppliers.manage'),
   supplierValidator.update,
   validateRequest,
+  auditLogger('update', 'supplier'),
   asyncHandler(supplierController.updateSupplier)
 );
 
@@ -46,6 +49,7 @@ router.patch(
   authorizePermissions('suppliers.manage'),
   supplierValidator.updateStatus,
   validateRequest,
+  auditLogger('status_change', 'supplier'),
   asyncHandler(supplierController.updateSupplierStatus)
 );
 
@@ -54,6 +58,7 @@ router.delete(
   authorizePermissions('suppliers.manage'),
   supplierValidator.idParam,
   validateRequest,
+  auditLogger('delete', 'supplier'),
   asyncHandler(supplierController.deleteSupplier)
 );
 

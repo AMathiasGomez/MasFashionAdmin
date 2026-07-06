@@ -5,13 +5,15 @@ import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { PaginatedResult } from '../../core/models/api-response.model';
 import { Customer, Order, Product } from '../../core/models/business.model';
 import { ApiService } from '../../core/services/api.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
+import { buildWhatsAppLink } from '../../core/utils/whatsapp';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, NgFor, NgIf, PageHeaderComponent, ReactiveFormsModule, StatusBadgeComponent],
+  imports: [CurrencyPipe, DatePipe, NgFor, NgIf, ModalComponent, PageHeaderComponent, ReactiveFormsModule, StatusBadgeComponent],
   template: `
     <app-page-header title="Pedidos" subtitle="Seguimiento de ventas, estados y saldos">
       <button class="btn btn-primary" type="button" (click)="showForm.set(!showForm())">
@@ -19,7 +21,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
       </button>
     </app-page-header>
 
-    <section class="app-card p-3 mb-3" *ngIf="showForm()">
+    <app-modal title="Nuevo pedido" [open]="showForm()" (closed)="showForm.set(false)">
       <form [formGroup]="form" (ngSubmit)="create()" class="d-grid gap-3">
         <div class="row g-3">
           <div class="col-md-4">
@@ -47,6 +49,10 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
           <div class="col-md-3">
             <label class="form-label">Abono inicial</label>
             <input type="number" class="form-control" formControlName="amountPaid">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Fecha limite de pago</label>
+            <input type="date" class="form-control" formControlName="dueDate">
           </div>
         </div>
 
@@ -81,12 +87,12 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
           <button class="btn btn-primary" [disabled]="form.invalid">Crear pedido</button>
         </div>
       </form>
-    </section>
+    </app-modal>
 
     <section class="app-card p-3">
       <div class="table-responsive">
         <table class="table align-middle">
-          <thead><tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Pagado</th><th>Pendiente</th><th>Estado</th><th>Fecha</th></tr></thead>
+          <thead><tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Pagado</th><th>Pendiente</th><th>Estado</th><th>Fecha</th><th>Vence</th><th class="text-end">Acciones</th></tr></thead>
           <tbody>
             <tr *ngFor="let order of orders()">
               <td class="fw-semibold">#{{ order.id }}</td>
@@ -96,6 +102,31 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
               <td>{{ order.pendingAmount | currency:'COP':'symbol':'1.0-0' }}</td>
               <td><app-status-badge [status]="order.status" /></td>
               <td>{{ order.createdAt | date:'mediumDate' }}</td>
+              <td>
+                <ng-container *ngIf="order.dueDate; else noDate">
+                  <span
+                    class="badge rounded-pill"
+                    [class.text-bg-danger]="isOverdue(order)"
+                    [class.text-bg-warning]="isDueSoon(order)"
+                    [class.text-bg-secondary]="!isOverdue(order) && !isDueSoon(order)"
+                  >
+                    {{ order.dueDate | date:'mediumDate' }}
+                  </span>
+                </ng-container>
+                <ng-template #noDate>-</ng-template>
+              </td>
+              <td class="text-end">
+                <a
+                  *ngIf="order.customerPhone"
+                  class="btn btn-sm btn-outline-success"
+                  title="Enviar por WhatsApp"
+                  [href]="whatsAppLink(order)"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <i class="bi bi-whatsapp"></i>
+                </a>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -117,6 +148,7 @@ export class OrdersComponent {
     paymentMethod: ['cash', Validators.required],
     discount: [0, [Validators.min(0)]],
     amountPaid: [0, [Validators.min(0)]],
+    dueDate: [''],
     items: this.fb.array([this.createItemGroup()])
   });
 
@@ -152,13 +184,59 @@ export class OrdersComponent {
       return;
     }
 
-    this.api.post<Order>('/orders', this.form.getRawValue()).subscribe(() => {
-      this.form.reset({ customerId: 0, paymentMethod: 'cash', discount: 0, amountPaid: 0 });
+    const payload = { ...this.form.getRawValue(), dueDate: this.form.controls.dueDate.value || null };
+
+    this.api.post<Order>('/orders', payload).subscribe(() => {
+      this.form.reset({ customerId: 0, paymentMethod: 'cash', discount: 0, amountPaid: 0, dueDate: '' });
       this.items.clear();
       this.addItem();
       this.showForm.set(false);
       this.load();
     });
+  }
+
+  isOverdue(order: Order): boolean {
+    if (!order.dueDate || Number(order.pendingAmount) <= 0) {
+      return false;
+    }
+
+    return new Date(order.dueDate) < this.startOfToday();
+  }
+
+  isDueSoon(order: Order): boolean {
+    if (!order.dueDate || Number(order.pendingAmount) <= 0 || this.isOverdue(order)) {
+      return false;
+    }
+
+    const diffDays = Math.round((new Date(order.dueDate).getTime() - this.startOfToday().getTime()) / 86400000);
+    return diffDays <= 3;
+  }
+
+  whatsAppLink(order: Order): string {
+    const statusLabels: Record<string, string> = {
+      pending: 'pendiente',
+      in_production: 'en producción',
+      shipped: 'enviado',
+      delivered: 'entregado',
+      cancelled: 'cancelado'
+    };
+
+    const money = (value: number) =>
+      new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
+
+    let message = `Hola ${order.customerName}, tu pedido #${order.id} está ${statusLabels[order.status] || order.status}. Total: ${money(order.total)}.`;
+
+    if (Number(order.pendingAmount) > 0) {
+      message += ` Saldo pendiente: ${money(order.pendingAmount)}.`;
+    }
+
+    return buildWhatsAppLink(order.customerPhone!, message);
+  }
+
+  private startOfToday(): Date {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
   }
 
   private load(): void {

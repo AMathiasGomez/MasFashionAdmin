@@ -1,0 +1,41 @@
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 16, 25, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5vh 16px;
+  z-index: 1050;
+  overflow-y: auto;
+}
+
+.modal-panel {
+  width: min(100%, 720px);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(23, 16, 25, 0.28);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.modal-body {
+  padding: 22px;
+  overflow-y: auto;
+}

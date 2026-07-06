@@ -21,13 +21,14 @@ interface NavItem {
 
     <aside class="sidebar" [ngClass]="{ 'is-open': open }">
       <div class="brand">
-        <div class="brand-mark">A</div>
+        <div class="brand-mark"><i class="bi bi-bag-heart"></i></div>
         <div>
-          <div class="brand-title">Atelier Admin</div>
-          <small>Inventario y ventas</small>
+          <div class="brand-title">Más Fashion</div>
+          <small>Panel de gestión</small>
         </div>
       </div>
 
+      <div class="nav-section-label">Operación</div>
       <nav class="nav-list">
         <a
           *ngFor="let item of visibleItems"
@@ -41,6 +42,12 @@ interface NavItem {
           <span>{{ item.label }}</span>
         </a>
       </nav>
+
+      <div class="tip-card">
+        <div class="tip-title"><i class="bi bi-stars"></i> Temporada Primavera</div>
+        <p>Tienes productos con stock por debajo del mínimo.</p>
+        <a routerLink="/inventory" (click)="closed.emit()">Revisar inventario <i class="bi bi-arrow-right"></i></a>
+      </div>
     </aside>
   `
 })
@@ -58,7 +65,8 @@ export class SidebarComponent {
     { label: 'Clientes', icon: 'bi-people', path: '/customers', permission: 'customers.read' },
     { label: 'Insumos', icon: 'bi-scissors', path: '/supplies', permission: 'supplies.read' },
     { label: 'Finanzas', icon: 'bi-cash-coin', path: '/finances', permission: 'finances.read' },
-    { label: 'Reportes', icon: 'bi-file-earmark-arrow-down', path: '/reports', permission: 'reports.export' }
+    { label: 'Reportes', icon: 'bi-file-earmark-arrow-down', path: '/reports', permission: 'reports.export' },
+    { label: 'Auditoria', icon: 'bi-shield-check', path: '/audit-log', permission: 'audit.read' }
   ];
 
   constructor(private readonly auth: AuthService) {}

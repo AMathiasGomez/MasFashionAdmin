@@ -1,6 +1,7 @@
 const orderModel = require('./order.model');
 const { withTransaction } = require('../../config/database');
 const { ApiError } = require('../../utils/api-error');
+const { urgencyOf } = require('../../utils/receivables');
 
 const listOrders = async (filters) => {
   const page = Number(filters.page || 1);
@@ -21,6 +22,15 @@ const listOrders = async (filters) => {
       pages: Math.ceil(total / limit)
     }
   };
+};
+
+const listReceivables = async () => {
+  const orders = await orderModel.findReceivables();
+
+  return orders.map((order) => ({
+    ...order,
+    urgency: urgencyOf(order.dueDate)
+  }));
 };
 
 const getOrderById = async (id) => {
@@ -83,7 +93,8 @@ const createOrder = async (payload, user) =>
         status: payload.status || 'pending',
         paymentMethod: payload.paymentMethod,
         deliveryAddress: payload.deliveryAddress || customer.address,
-        observations: payload.observations || null
+        observations: payload.observations || null,
+        dueDate: payload.dueDate || null
       },
       connection
     );
@@ -256,6 +267,7 @@ const addPayment = async (id, payload, user) =>
 
 module.exports = {
   listOrders,
+  listReceivables,
   getOrderById,
   createOrder,
   updateStatus,

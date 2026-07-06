@@ -26,7 +26,8 @@ const create = [
   body('paymentMethod').isIn(paymentMethods).withMessage('Payment method is invalid'),
   body('deliveryAddress').optional({ nullable: true }).trim().isLength({ max: 255 }),
   body('observations').optional({ nullable: true }).trim().isLength({ max: 2000 }),
-  body('amountPaid').optional().isFloat({ min: 0 }).withMessage('Amount paid must be greater than or equal to 0')
+  body('amountPaid').optional().isFloat({ min: 0 }).withMessage('Amount paid must be greater than or equal to 0'),
+  body('dueDate').optional({ nullable: true }).isISO8601().withMessage('Due date must be a valid date')
 ];
 
 const updateStatus = [

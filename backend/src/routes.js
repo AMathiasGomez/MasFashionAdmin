@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+const auditRoutes = require('./modules/audit/audit.routes');
 const authRoutes = require('./modules/auth/auth.routes');
 const categoryRoutes = require('./modules/categories/category.routes');
 const customerRoutes = require('./modules/customers/customer.routes');
@@ -14,6 +15,7 @@ const supplyRoutes = require('./modules/supplies/supply.routes');
 const supplierRoutes = require('./modules/suppliers/supplier.routes');
 
 router.use('/health', healthRoutes);
+router.use('/audit-logs', auditRoutes);
 router.use('/auth', authRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/customers', customerRoutes);

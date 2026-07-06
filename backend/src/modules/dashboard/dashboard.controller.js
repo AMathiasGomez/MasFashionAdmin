@@ -6,7 +6,13 @@ const getSummary = async (req, res) => {
   sendSuccess(res, summary);
 };
 
+const getSalesForecast = async (req, res) => {
+  const forecast = await dashboardService.getSalesForecast();
+  sendSuccess(res, forecast);
+};
+
 module.exports = {
-  getSummary
+  getSummary,
+  getSalesForecast
 };
 

@@ -18,6 +18,7 @@ export interface DashboardSummary {
     lowStockProducts: LowStockProduct[];
     frequentCustomers: FrequentCustomer[];
     pendingOrders: PendingOrder[];
+    receivables: Receivable[];
   };
 }
 
@@ -25,6 +26,19 @@ export interface MonthlySales {
   month: string;
   sales: number;
   orders: number;
+}
+
+export interface ProjectedSales {
+  month: string;
+  projectedSales: number;
+}
+
+export interface SalesForecast {
+  history: MonthlySales[];
+  projected: ProjectedSales[];
+  method: 'linear_regression' | 'insufficient_history';
+  trend?: 'up' | 'down';
+  message?: string;
 }
 
 export interface BestSellingProduct {
@@ -66,6 +80,8 @@ export interface PendingOrder {
 
 export interface Product {
   id: number;
+  groupId: number | null;
+  groupName: string | null;
   categoryId: number;
   categoryName: string;
   supplierId: number | null;
@@ -81,6 +97,19 @@ export interface Product {
   minStock: number;
   isLowStock: number;
   active: number;
+}
+
+export interface ProductGroupSummary {
+  groupId: number | null;
+  groupName: string;
+  categoryId: number;
+  categoryName: string;
+  variants: Product[];
+  variantCount: number;
+  totalStock: number;
+  minPrice: number;
+  maxPrice: number;
+  hasLowStock: boolean;
 }
 
 export interface Category {
@@ -112,12 +141,25 @@ export interface Customer {
 export interface Order {
   id: number;
   customerName: string;
+  customerPhone: string | null;
   total: number;
   amountPaid: number;
   pendingAmount: number;
   status: string;
   paymentMethod: string;
+  dueDate: string | null;
   createdAt: string;
+}
+
+export type ReceivableUrgency = 'overdue' | 'due_soon' | 'upcoming' | 'no_date';
+
+export interface Receivable {
+  id: number;
+  customerName: string;
+  total: number;
+  dueDate: string | null;
+  pendingAmount: number;
+  urgency: ReceivableUrgency;
 }
 
 export interface InventoryMovement {
@@ -149,4 +191,16 @@ export interface FinancialTransaction {
   amount: number;
   description: string | null;
   transactionDate: string;
+  referenceType: string;
+}
+
+export interface AuditLog {
+  id: number;
+  userId: number | null;
+  userName: string | null;
+  action: string;
+  entityType: string;
+  entityId: number | null;
+  details: Record<string, unknown> | null;
+  createdAt: string;
 }

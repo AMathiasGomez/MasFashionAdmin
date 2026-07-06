@@ -5,13 +5,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PaginatedResult } from '../../core/models/api-response.model';
 import { FinancialTransaction } from '../../core/models/business.model';
 import { ApiService } from '../../core/services/api.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-finances',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, NgFor, NgIf, PageHeaderComponent, ReactiveFormsModule, StatusBadgeComponent],
+  imports: [CurrencyPipe, DatePipe, NgFor, NgIf, ModalComponent, PageHeaderComponent, ReactiveFormsModule, StatusBadgeComponent],
   template: `
     <app-page-header title="Finanzas" subtitle="Ingresos, gastos y utilidad del negocio">
       <button class="btn btn-primary" type="button" (click)="showForm.set(!showForm())">
@@ -19,7 +20,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
       </button>
     </app-page-header>
 
-    <section class="app-card p-3 mb-3" *ngIf="showForm()">
+    <app-modal title="Nuevo movimiento" [open]="showForm()" (closed)="showForm.set(false)">
       <form class="row g-3" [formGroup]="form" (ngSubmit)="create()">
         <div class="col-md-2">
           <label class="form-label">Tipo</label>
@@ -48,12 +49,12 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
           <button class="btn btn-primary" [disabled]="form.invalid">Guardar movimiento</button>
         </div>
       </form>
-    </section>
+    </app-modal>
 
     <section class="app-card p-3">
       <div class="table-responsive">
         <table class="table align-middle">
-          <thead><tr><th>Tipo</th><th>Categoria</th><th>Monto</th><th>Descripcion</th><th>Fecha</th></tr></thead>
+          <thead><tr><th>Tipo</th><th>Categoria</th><th>Monto</th><th>Descripcion</th><th>Fecha</th><th class="text-end">Acciones</th></tr></thead>
           <tbody>
             <tr *ngFor="let item of transactions()">
               <td><app-status-badge [status]="item.type" /></td>
@@ -61,6 +62,17 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
               <td>{{ item.amount | currency:'COP':'symbol':'1.0-0' }}</td>
               <td>{{ item.description || '-' }}</td>
               <td>{{ item.transactionDate | date:'mediumDate' }}</td>
+              <td class="text-end">
+                <button
+                  *ngIf="item.referenceType === 'manual'"
+                  class="btn btn-sm btn-outline-danger"
+                  type="button"
+                  title="Eliminar"
+                  (click)="remove(item)"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -103,6 +115,14 @@ export class FinancesComponent {
       this.showForm.set(false);
       this.load();
     });
+  }
+
+  remove(item: FinancialTransaction): void {
+    if (!confirm('¿Eliminar este movimiento financiero?')) {
+      return;
+    }
+
+    this.api.delete(`/finances/transactions/${item.id}`).subscribe(() => this.load());
   }
 
   private load(): void {

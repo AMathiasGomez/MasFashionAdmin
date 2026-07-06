@@ -115,9 +115,37 @@ const getProfits = async (filters = {}) => {
   );
 };
 
+const getProfitabilityByCategory = async (filters = {}) => {
+  const { whereSql, params } = buildDateWhere('o.created_at', filters);
+
+  return query(
+    `SELECT
+       c.name AS categoryName,
+       COUNT(DISTINCT o.id) AS ordersCount,
+       SUM(oi.quantity) AS unitsSold,
+       SUM(oi.subtotal) AS salesTotal,
+       SUM(oi.unit_cost * oi.quantity) AS costTotal,
+       SUM((oi.unit_price - oi.unit_cost) * oi.quantity) AS grossProfit,
+       CASE
+         WHEN SUM(oi.subtotal) = 0 THEN 0
+         ELSE ROUND((SUM((oi.unit_price - oi.unit_cost) * oi.quantity) / SUM(oi.subtotal)) * 100, 2)
+       END AS profitMargin
+     FROM order_items oi
+     JOIN orders o ON o.id = oi.order_id
+     JOIN products p ON p.id = oi.product_id
+     JOIN categories c ON c.id = p.category_id
+     WHERE o.status != 'cancelled'
+       ${whereSql}
+     GROUP BY c.id, c.name
+     ORDER BY grossProfit DESC`,
+    params
+  );
+};
+
 module.exports = {
   getInventory,
   getOrders,
   getSales,
-  getProfits
+  getProfits,
+  getProfitabilityByCategory
 };

@@ -11,6 +11,11 @@ export const appRoutes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
   },
   {
+    path: 'register',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/register/register.component').then((m) => m.RegisterComponent)
+  },
+  {
     path: '',
     component: AdminLayoutComponent,
     canActivate: [authGuard],
@@ -68,6 +73,11 @@ export const appRoutes: Routes = [
         path: 'reports',
         loadComponent: () =>
           import('./features/reports/reports.component').then((m) => m.ReportsComponent)
+      },
+      {
+        path: 'audit-log',
+        loadComponent: () =>
+          import('./features/audit-log/audit-log.component').then((m) => m.AuditLogComponent)
       }
     ]
   },

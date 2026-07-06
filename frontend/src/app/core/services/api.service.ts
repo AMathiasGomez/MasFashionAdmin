@@ -42,6 +42,12 @@ export class ApiService {
       .pipe(map((response) => response.data));
   }
 
+  delete<T>(path: string): Observable<T> {
+    return this.http
+      .delete<ApiResponse<T>>(`${API_BASE_URL}${path}`)
+      .pipe(map((response) => response.data));
+  }
+
   private buildParams(query?: Record<string, QueryValue>): HttpParams {
     let params = new HttpParams();
 

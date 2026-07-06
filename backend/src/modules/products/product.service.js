@@ -23,6 +23,8 @@ const listProducts = async (filters) => {
   };
 };
 
+const listGroupedProducts = async (filters) => productModel.findGrouped(filters);
+
 const getProductById = async (id) => {
   const product = await productModel.findById(id);
 
@@ -52,7 +54,9 @@ const updateProduct = async (id, payload) =>
       throw new ApiError(404, 'Product not found');
     }
 
-    await productModel.update(id, payload, connection);
+    const groupId = payload.groupId !== undefined ? payload.groupId : existing.groupId;
+
+    await productModel.update(id, { ...payload, groupId }, connection);
 
     if (payload.images) {
       await productModel.replaceImages(id, payload.images, connection);
@@ -76,6 +80,7 @@ const deleteProduct = async (id) => updateProductStatus(id, false);
 
 module.exports = {
   listProducts,
+  listGroupedProducts,
   getProductById,
   createProduct,
   updateProduct,

@@ -1,15 +1,52 @@
 .topbar {
-  height: 72px;
-  padding: 0 24px;
+  height: 66px;
+  padding: 0 26px;
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--app-surface);
   border-bottom: 1px solid var(--app-border);
-  backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 20;
+}
+
+.search-box {
+  align-items: center;
+  gap: 9px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 11px;
+  background: var(--app-surface-2);
+  border: 1px solid var(--app-border);
+  width: 280px;
+  margin-left: 16px;
+  color: var(--app-muted);
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--app-text);
+  width: 100%;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--app-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: 'Space Grotesk', sans-serif;
+  flex: 0 0 38px;
 }
 
 @media (max-width: 991.98px) {
@@ -17,4 +54,3 @@
     padding: 0 18px;
   }
 }
-

@@ -6,6 +6,16 @@ const login = async (req, res) => {
   sendSuccess(res, session, 'Login successful');
 };
 
+const register = async (req, res) => {
+  const session = await authService.register(req.body);
+  sendSuccess(res, session, 'Registration successful', 201);
+};
+
+const google = async (req, res) => {
+  const session = await authService.loginWithGoogle(req.body.credential);
+  sendSuccess(res, session, 'Login successful');
+};
+
 const logout = async (req, res) => {
   await authService.logout(req.user);
   sendSuccess(res, null, 'Logout successful');
@@ -23,6 +33,8 @@ const getProfile = async (req, res) => {
 
 module.exports = {
   login,
+  register,
+  google,
   logout,
   getProfile
 };

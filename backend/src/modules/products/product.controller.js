@@ -6,6 +6,11 @@ const listProducts = async (req, res) => {
   sendSuccess(res, result);
 };
 
+const listGroupedProducts = async (req, res) => {
+  const groups = await productService.listGroupedProducts(req.query);
+  sendSuccess(res, groups);
+};
+
 const getProduct = async (req, res) => {
   const product = await productService.getProductById(Number(req.params.id));
   sendSuccess(res, product);
@@ -33,6 +38,7 @@ const deleteProduct = async (req, res) => {
 
 module.exports = {
   listProducts,
+  listGroupedProducts,
   getProduct,
   createProduct,
   updateProduct,

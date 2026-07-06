@@ -17,5 +17,13 @@ router.get(
   asyncHandler(reportController.exportReport)
 );
 
+router.post(
+  '/:type/:format/email',
+  authorizePermissions('reports.export'),
+  reportValidator.emailReport,
+  validateRequest,
+  asyncHandler(reportController.emailReport)
+);
+
 module.exports = router;
 

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 import { ApiService } from './api.service';
-import { LoginRequest, LoginResponse, UserSession } from '../models/auth.model';
+import { LoginRequest, LoginResponse, RegisterRequest, UserSession } from '../models/auth.model';
 
 const TOKEN_KEY = 'clothing_admin_token';
 const USER_KEY = 'clothing_admin_user';
@@ -19,6 +19,26 @@ export class AuthService {
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.api.post<LoginResponse>('/auth/login', credentials).pipe(
+      tap((response) => {
+        localStorage.setItem(TOKEN_KEY, response.accessToken);
+        localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+        this.user.set(response.user);
+      })
+    );
+  }
+
+  register(payload: RegisterRequest): Observable<LoginResponse> {
+    return this.api.post<LoginResponse>('/auth/register', payload).pipe(
+      tap((response) => {
+        localStorage.setItem(TOKEN_KEY, response.accessToken);
+        localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+        this.user.set(response.user);
+      })
+    );
+  }
+
+  loginWithGoogle(credential: string): Observable<LoginResponse> {
+    return this.api.post<LoginResponse>('/auth/google', { credential }).pipe(
       tap((response) => {
         localStorage.setItem(TOKEN_KEY, response.accessToken);
         localStorage.setItem(USER_KEY, JSON.stringify(response.user));

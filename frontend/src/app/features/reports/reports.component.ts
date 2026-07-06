@@ -6,7 +6,7 @@ import { ApiService } from '../../core/services/api.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 interface ReportOption {
-  type: 'inventory' | 'orders' | 'sales' | 'profits';
+  type: 'inventory' | 'orders' | 'sales' | 'profits' | 'profitability';
   label: string;
   description: string;
   icon: string;
@@ -46,12 +46,16 @@ interface ReportOption {
             <button class="btn btn-outline-secondary" type="button" (click)="download(report, 'pdf')" [disabled]="loading()">
               <i class="bi bi-file-earmark-pdf me-2"></i>PDF
             </button>
+            <button class="btn btn-outline-success" type="button" (click)="sendByEmail(report)" [disabled]="loading()">
+              <i class="bi bi-envelope me-2"></i>Enviar por correo
+            </button>
           </div>
         </article>
       </div>
     </section>
 
     <div class="alert alert-danger mt-3" *ngIf="error()">{{ error() }}</div>
+    <div class="alert alert-success mt-3" *ngIf="success()">{{ success() }}</div>
   `,
   styles: [
     `
@@ -74,6 +78,7 @@ export class ReportsComponent {
 
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly success = signal('');
 
   readonly filters = this.fb.nonNullable.group({
     from: [''],
@@ -108,12 +113,20 @@ export class ReportsComponent {
       description: 'Rentabilidad agrupada por producto vendido.',
       icon: 'bi-cash-coin text-warning',
       supportsDates: true
+    },
+    {
+      type: 'profitability',
+      label: 'Rentabilidad por categoria',
+      description: 'Ventas, costos y margen agrupados por categoria y temporada (usa el rango de fechas).',
+      icon: 'bi-pie-chart text-primary',
+      supportsDates: true
     }
   ];
 
   download(report: ReportOption, format: 'xlsx' | 'pdf'): void {
     this.loading.set(true);
     this.error.set('');
+    this.success.set('');
 
     const query = report.supportsDates ? this.filters.getRawValue() : {};
 
@@ -127,6 +140,46 @@ export class ReportsComponent {
         this.loading.set(false);
       }
     });
+  }
+
+  sendByEmail(report: ReportOption): void {
+    const input = prompt('Correo(s) destino separados por coma (deja vacio para usar los configurados por defecto):');
+
+    if (input === null) {
+      return;
+    }
+
+    const recipients = input
+      .split(',')
+      .map((email) => email.trim())
+      .filter(Boolean);
+
+    this.loading.set(true);
+    this.error.set('');
+    this.success.set('');
+
+    const query = report.supportsDates ? this.filters.getRawValue() : {};
+
+    this.api
+      .post<{ sentTo: string[] }>(`/reports/${report.type}/xlsx/email?${this.toQueryString(query)}`, {
+        recipients: recipients.length ? recipients : undefined
+      })
+      .subscribe({
+        next: (result) => {
+          this.success.set(`Reporte enviado a: ${result.sentTo.join(', ')}`);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.error.set(err?.error?.message || 'No se pudo enviar el reporte por correo.');
+          this.loading.set(false);
+        }
+      });
+  }
+
+  private toQueryString(query: Record<string, string>): string {
+    return new URLSearchParams(
+      Object.entries(query).filter(([, value]) => Boolean(value))
+    ).toString();
   }
 
   private saveBlob(blob: Blob, filename: string): void {

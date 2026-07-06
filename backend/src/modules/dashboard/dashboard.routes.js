@@ -17,5 +17,11 @@ router.get(
   asyncHandler(dashboardController.getSummary)
 );
 
+router.get(
+  '/forecast',
+  authorizePermissions('dashboard.read'),
+  asyncHandler(dashboardController.getSalesForecast)
+);
+
 module.exports = router;
 

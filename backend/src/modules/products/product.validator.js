@@ -8,6 +8,7 @@ const list = [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be greater than 0'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('categoryId').optional().isInt({ min: 1 }).withMessage('Category id must be valid'),
+  query('groupId').optional().isInt({ min: 1 }).withMessage('Group id must be valid'),
   query('active').optional().isBoolean().withMessage('Active must be true or false'),
   query('lowStock').optional().isBoolean().withMessage('Low stock must be true or false')
 ];
@@ -30,6 +31,7 @@ const imageFields = [
 ];
 
 const productBody = [
+  body('groupId').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Group id must be valid'),
   body('categoryId').isInt({ min: 1 }).withMessage('Category is required'),
   body('supplierId').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Supplier id must be valid'),
   body('name').trim().notEmpty().withMessage('Name is required').isLength({ max: 160 }),

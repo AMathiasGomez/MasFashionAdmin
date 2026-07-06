@@ -130,12 +130,46 @@ const getPendingOrders = async () =>
      LIMIT 10`
   );
 
+const getReceivables = async () =>
+  execute(
+    `SELECT
+       o.id,
+       c.name AS customerName,
+       o.total,
+       o.due_date AS dueDate,
+       (o.total - COALESCE(SUM(op.amount), 0)) AS pendingAmount
+     FROM orders o
+     JOIN customers c ON c.id = o.customer_id
+     LEFT JOIN order_payments op ON op.order_id = o.id
+     WHERE o.status != 'cancelled'
+     GROUP BY o.id, c.name, o.total, o.due_date
+     HAVING pendingAmount > 0
+     ORDER BY (o.due_date IS NULL) ASC, o.due_date ASC, o.created_at ASC
+     LIMIT 6`
+  );
+
+const getSalesHistory = async (monthsBack = 12) =>
+  execute(
+    `SELECT
+       DATE_FORMAT(created_at, '%Y-%m') AS month,
+       SUM(total) AS sales,
+       COUNT(*) AS orders
+     FROM orders
+     WHERE status != 'cancelled'
+       AND created_at >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL :monthsBack MONTH)
+     GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+     ORDER BY month ASC`,
+    { monthsBack }
+  );
+
 module.exports = {
   getCards,
   getMonthlySales,
+  getSalesHistory,
   getBestSellingProducts,
   getLowStockProducts,
   getFrequentCustomers,
-  getPendingOrders
+  getPendingOrders,
+  getReceivables
 };
 

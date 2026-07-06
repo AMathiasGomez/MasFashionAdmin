@@ -4,6 +4,7 @@ const authenticate = require('../../middlewares/auth.middleware');
 const asyncHandler = require('../../middlewares/async-handler.middleware');
 const validateRequest = require('../../middlewares/validate.middleware');
 const { authorizePermissions } = require('../../middlewares/role.middleware');
+const { auditLogger } = require('../../middlewares/audit.middleware');
 const supplyController = require('./supply.controller');
 const supplyValidator = require('./supply.validator');
 
@@ -38,6 +39,7 @@ router.post(
   authorizePermissions('supplies.manage'),
   supplyValidator.create,
   validateRequest,
+  auditLogger('create', 'supply_purchase'),
   asyncHandler(supplyController.createPurchase)
 );
 
@@ -46,6 +48,7 @@ router.put(
   authorizePermissions('supplies.manage'),
   supplyValidator.update,
   validateRequest,
+  auditLogger('update', 'supply_purchase'),
   asyncHandler(supplyController.updatePurchase)
 );
 
@@ -54,6 +57,7 @@ router.delete(
   authorizePermissions('supplies.manage'),
   supplyValidator.idParam,
   validateRequest,
+  auditLogger('delete', 'supply_purchase'),
   asyncHandler(supplyController.deletePurchase)
 );
 

@@ -1,15 +1,16 @@
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Category } from '../../core/models/business.model';
 import { ApiService } from '../../core/services/api.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [NgFor, NgIf, PageHeaderComponent, ReactiveFormsModule],
+  imports: [NgFor, ModalComponent, PageHeaderComponent, ReactiveFormsModule],
   template: `
     <app-page-header title="Categorias" subtitle="Clasificacion del catalogo de prendas">
       <button class="btn btn-primary" type="button" (click)="startCreate()">
@@ -17,26 +18,24 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
       </button>
     </app-page-header>
 
-    <section class="app-card p-3 mb-3" *ngIf="showForm()">
+    <app-modal [title]="editingId() ? 'Editar categoria' : 'Nueva categoria'" [open]="showForm()" (closed)="cancel()">
       <form class="row g-3" [formGroup]="form" (ngSubmit)="save()">
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label class="form-label">Nombre</label>
           <input class="form-control" formControlName="name">
         </div>
-        <div class="col-md-5">
+        <div class="col-md-6">
           <label class="form-label">Descripcion</label>
           <input class="form-control" formControlName="description">
         </div>
-        <div class="col-md-3 d-flex align-items-end gap-2">
-          <button class="btn btn-primary flex-fill" [disabled]="form.invalid">
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <button class="btn btn-outline-secondary" type="button" (click)="cancel()">Cancelar</button>
+          <button class="btn btn-primary" [disabled]="form.invalid">
             {{ editingId() ? 'Actualizar' : 'Guardar' }}
-          </button>
-          <button class="btn btn-outline-secondary icon-btn" type="button" title="Cancelar" (click)="cancel()">
-            <i class="bi bi-x-lg"></i>
           </button>
         </div>
       </form>
-    </section>
+    </app-modal>
 
     <section class="app-card p-3">
       <div class="table-responsive">
@@ -59,9 +58,14 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
                 </span>
               </td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-secondary" type="button" (click)="edit(category)">
-                  <i class="bi bi-pencil"></i>
-                </button>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-secondary" type="button" title="Editar" (click)="edit(category)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" type="button" title="Eliminar" (click)="remove(category)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -123,6 +127,14 @@ export class CategoriesComponent {
       this.cancel();
       this.load();
     });
+  }
+
+  remove(category: Category): void {
+    if (!confirm(`¿Eliminar la categoria "${category.name}"?`)) {
+      return;
+    }
+
+    this.api.delete(`/categories/${category.id}`).subscribe(() => this.load());
   }
 
   private load(): void {

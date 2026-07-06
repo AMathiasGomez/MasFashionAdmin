@@ -5,12 +5,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PaginatedResult } from '../../core/models/api-response.model';
 import { Customer } from '../../core/models/business.model';
 import { ApiService } from '../../core/services/api.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { buildWhatsAppLink } from '../../core/utils/whatsapp';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CurrencyPipe, NgFor, NgIf, PageHeaderComponent, ReactiveFormsModule],
+  imports: [CurrencyPipe, NgFor, NgIf, ModalComponent, PageHeaderComponent, ReactiveFormsModule],
   template: `
     <app-page-header title="Clientes" subtitle="Historial de compras y clientes frecuentes">
       <button class="btn btn-primary" type="button" (click)="showForm.set(!showForm())">
@@ -18,7 +20,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
       </button>
     </app-page-header>
 
-    <section class="app-card p-3 mb-3" *ngIf="showForm()">
+    <app-modal title="Nuevo cliente" [open]="showForm()" (closed)="showForm.set(false)">
       <form class="row g-3" [formGroup]="form" (ngSubmit)="create()">
         <div class="col-md-3"><label class="form-label">Nombre</label><input class="form-control" formControlName="name"></div>
         <div class="col-md-3"><label class="form-label">Telefono</label><input class="form-control" formControlName="phone"></div>
@@ -26,12 +28,12 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
         <div class="col-md-3"><label class="form-label">Direccion</label><input class="form-control" formControlName="address"></div>
         <div class="col-12"><button class="btn btn-primary" [disabled]="form.invalid">Guardar cliente</button></div>
       </form>
-    </section>
+    </app-modal>
 
     <section class="app-card p-3">
       <div class="table-responsive">
         <table class="table align-middle">
-          <thead><tr><th>Cliente</th><th>Telefono</th><th>Instagram</th><th>Compras</th><th>Total gastado</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Telefono</th><th>Instagram</th><th>Compras</th><th>Total gastado</th><th class="text-end">Acciones</th></tr></thead>
           <tbody>
             <tr *ngFor="let customer of customers()">
               <td class="fw-semibold">{{ customer.name }}</td>
@@ -39,6 +41,23 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
               <td>{{ customer.instagram || '-' }}</td>
               <td>{{ customer.ordersCount }}</td>
               <td>{{ customer.totalSpent | currency:'COP':'symbol':'1.0-0' }}</td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <a
+                    *ngIf="customer.phone"
+                    class="btn btn-outline-success"
+                    title="Avisar por WhatsApp"
+                    [href]="whatsAppLink(customer)"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <i class="bi bi-whatsapp"></i>
+                  </a>
+                  <button class="btn btn-outline-danger" type="button" title="Eliminar" (click)="remove(customer)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -74,6 +93,22 @@ export class CustomersComponent {
       this.showForm.set(false);
       this.load();
     });
+  }
+
+  remove(customer: Customer): void {
+    if (!confirm(`¿Eliminar el cliente "${customer.name}"?`)) {
+      return;
+    }
+
+    this.api.delete(`/customers/${customer.id}`).subscribe({
+      next: () => this.load(),
+      error: () => alert('No se puede eliminar: el cliente tiene pedidos registrados.')
+    });
+  }
+
+  whatsAppLink(customer: Customer): string {
+    const message = `Hola ${customer.name}, te escribimos de Más Fashion para contarte que tu producto ya está disponible.`;
+    return buildWhatsAppLink(customer.phone!, message);
   }
 
   private load(): void {

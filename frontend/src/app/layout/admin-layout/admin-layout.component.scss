@@ -10,7 +10,9 @@
 }
 
 .admin-content {
-  padding: 24px;
+  padding: 26px;
+  background: var(--app-bg);
+  min-height: calc(100vh - 66px);
 }
 
 @media (max-width: 991.98px) {

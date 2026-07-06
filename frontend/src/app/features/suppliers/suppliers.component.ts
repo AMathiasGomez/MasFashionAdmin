@@ -1,16 +1,17 @@
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { PaginatedResult } from '../../core/models/api-response.model';
 import { Supplier } from '../../core/models/business.model';
 import { ApiService } from '../../core/services/api.service';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [NgFor, NgIf, PageHeaderComponent, ReactiveFormsModule],
+  imports: [NgFor, ModalComponent, PageHeaderComponent, ReactiveFormsModule],
   template: `
     <app-page-header title="Proveedores" subtitle="Contactos para productos e insumos">
       <button class="btn btn-primary" type="button" (click)="startCreate()">
@@ -18,7 +19,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
       </button>
     </app-page-header>
 
-    <section class="app-card p-3 mb-3" *ngIf="showForm()">
+    <app-modal [title]="editingId() ? 'Editar proveedor' : 'Nuevo proveedor'" [open]="showForm()" (closed)="cancel()">
       <form class="row g-3" [formGroup]="form" (ngSubmit)="save()">
         <div class="col-md-3">
           <label class="form-label">Nombre</label>
@@ -47,7 +48,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
           </button>
         </div>
       </form>
-    </section>
+    </app-modal>
 
     <section class="app-card p-3">
       <div class="table-responsive">
@@ -80,6 +81,9 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
                   </button>
                   <button class="btn btn-outline-secondary" type="button" title="Cambiar estado" (click)="toggleStatus(supplier)">
                     <i class="bi" [class.bi-toggle-on]="supplier.active" [class.bi-toggle-off]="!supplier.active"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" type="button" title="Eliminar" (click)="remove(supplier)">
+                    <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </td>
@@ -155,6 +159,14 @@ export class SuppliersComponent {
     this.api
       .patch<Supplier>(`/suppliers/${supplier.id}/status`, { active: !supplier.active })
       .subscribe(() => this.load());
+  }
+
+  remove(supplier: Supplier): void {
+    if (!confirm(`¿Eliminar el proveedor "${supplier.name}"?`)) {
+      return;
+    }
+
+    this.api.delete(`/suppliers/${supplier.id}`).subscribe(() => this.load());
   }
 
   private load(): void {

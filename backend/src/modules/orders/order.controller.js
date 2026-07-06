@@ -6,6 +6,11 @@ const listOrders = async (req, res) => {
   sendSuccess(res, result);
 };
 
+const listReceivables = async (req, res) => {
+  const receivables = await orderService.listReceivables();
+  sendSuccess(res, receivables);
+};
+
 const getOrder = async (req, res) => {
   const order = await orderService.getOrderById(Number(req.params.id));
   sendSuccess(res, order);
@@ -28,6 +33,7 @@ const addPayment = async (req, res) => {
 
 module.exports = {
   listOrders,
+  listReceivables,
   getOrder,
   createOrder,
   updateStatus,

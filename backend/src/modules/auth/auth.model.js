@@ -38,6 +38,26 @@ const findActiveUserById = async (id) => {
   return rows[0] || null;
 };
 
+const findRoleByName = async (name) => {
+  const rows = await query('SELECT id FROM roles WHERE name = :name LIMIT 1', { name });
+  return rows[0] || null;
+};
+
+const emailExists = async (email) => {
+  const rows = await query('SELECT id FROM users WHERE email = :email LIMIT 1', { email });
+  return rows.length > 0;
+};
+
+const createUser = async ({ name, email, passwordHash, roleId }) => {
+  const result = await query(
+    `INSERT INTO users (role_id, name, email, password_hash, active)
+     VALUES (:roleId, :name, :email, :passwordHash, 1)`,
+    { roleId, name, email, passwordHash }
+  );
+
+  return findActiveUserById(result.insertId);
+};
+
 const revokeToken = async (userId, tokenJti, expiresAt) => {
   await query(
     `INSERT INTO revoked_tokens (user_id, token_jti, expires_at)
@@ -62,6 +82,9 @@ const isTokenRevoked = async (tokenJti) => {
 module.exports = {
   findUserForLogin,
   findActiveUserById,
+  findRoleByName,
+  emailExists,
+  createUser,
   revokeToken,
   isTokenRevoked
 };

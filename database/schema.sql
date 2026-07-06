@@ -78,8 +78,26 @@ CREATE TABLE suppliers (
   INDEX idx_suppliers_name (name)
 ) ENGINE=InnoDB;
 
+CREATE TABLE product_groups (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  category_id INT UNSIGNED NOT NULL,
+  supplier_id INT UNSIGNED NULL,
+  name VARCHAR(160) NOT NULL,
+  description TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_product_groups_category
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_product_groups_supplier
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX idx_product_groups_name_category (name, category_id)
+) ENGINE=InnoDB;
+
 CREATE TABLE products (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  group_id INT UNSIGNED NULL,
   category_id INT UNSIGNED NOT NULL,
   supplier_id INT UNSIGNED NULL,
   name VARCHAR(160) NOT NULL,
@@ -97,6 +115,9 @@ CREATE TABLE products (
   CONSTRAINT chk_products_manufacturing_cost CHECK (manufacturing_cost >= 0),
   CONSTRAINT chk_products_stock CHECK (stock >= 0),
   CONSTRAINT chk_products_min_stock CHECK (min_stock >= 0),
+  CONSTRAINT fk_products_group
+    FOREIGN KEY (group_id) REFERENCES product_groups(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_products_category
     FOREIGN KEY (category_id) REFERENCES categories(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -104,6 +125,7 @@ CREATE TABLE products (
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
     ON DELETE SET NULL ON UPDATE CASCADE,
   INDEX idx_products_name (name),
+  INDEX idx_products_group_id (group_id),
   INDEX idx_products_category_id (category_id),
   INDEX idx_products_supplier_id (supplier_id),
   INDEX idx_products_stock_min_stock (stock, min_stock),
@@ -174,6 +196,7 @@ CREATE TABLE orders (
   payment_method ENUM('cash', 'card', 'transfer', 'nequi', 'daviplata', 'other') NOT NULL DEFAULT 'cash',
   delivery_address VARCHAR(255) NULL,
   observations TEXT NULL,
+  due_date DATE NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT chk_orders_subtotal CHECK (subtotal >= 0),
@@ -188,7 +211,8 @@ CREATE TABLE orders (
   INDEX idx_orders_customer_id (customer_id),
   INDEX idx_orders_user_id (user_id),
   INDEX idx_orders_status (status),
-  INDEX idx_orders_created_at (created_at)
+  INDEX idx_orders_created_at (created_at),
+  INDEX idx_orders_due_date (due_date)
 ) ENGINE=InnoDB;
 
 CREATE TABLE order_items (
@@ -287,6 +311,22 @@ CREATE TABLE financial_transactions (
   INDEX idx_financial_transactions_reference (reference_type, reference_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE audit_logs (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NULL,
+  action VARCHAR(30) NOT NULL,
+  entity_type VARCHAR(50) NOT NULL,
+  entity_id BIGINT UNSIGNED NULL,
+  details JSON NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_audit_logs_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX idx_audit_logs_entity (entity_type, entity_id),
+  INDEX idx_audit_logs_created_at (created_at),
+  INDEX idx_audit_logs_user_id (user_id)
+) ENGINE=InnoDB;
+
 INSERT INTO roles (name, description) VALUES
   ('administrator', 'Full system access'),
   ('seller', 'Sales, customers, orders and limited dashboard access'),
@@ -312,7 +352,8 @@ INSERT INTO permissions (code, description) VALUES
   ('supplies.manage', 'Create and update supply purchases'),
   ('finances.read', 'View financial information'),
   ('finances.manage', 'Create and update financial transactions'),
-  ('reports.export', 'Export PDF and Excel reports')
+  ('reports.export', 'Export PDF and Excel reports'),
+  ('audit.read', 'View the administrative audit log')
 ON DUPLICATE KEY UPDATE description = VALUES(description);
 
 INSERT INTO role_permissions (role_id, permission_id)

@@ -43,6 +43,7 @@ const orderSummarySelect = `
     o.id,
     o.customer_id AS customerId,
     c.name AS customerName,
+    c.phone AS customerPhone,
     o.user_id AS userId,
     u.name AS userName,
     o.subtotal,
@@ -54,6 +55,7 @@ const orderSummarySelect = `
     o.payment_method AS paymentMethod,
     o.delivery_address AS deliveryAddress,
     o.observations,
+    o.due_date AS dueDate,
     o.created_at AS createdAt,
     o.updated_at AS updatedAt
   FROM orders o
@@ -67,6 +69,7 @@ const orderSummaryGroup = `
     o.id,
     o.customer_id,
     c.name,
+    c.phone,
     o.user_id,
     u.name,
     o.subtotal,
@@ -76,6 +79,7 @@ const orderSummaryGroup = `
     o.payment_method,
     o.delivery_address,
     o.observations,
+    o.due_date,
     o.created_at,
     o.updated_at
 `;
@@ -203,9 +207,10 @@ const createOrder = async (payload, db = pool) => {
         status,
         payment_method,
         delivery_address,
-        observations
+        observations,
+        due_date
      )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       payload.customerId,
       payload.userId,
@@ -215,7 +220,8 @@ const createOrder = async (payload, db = pool) => {
       payload.status,
       payload.paymentMethod,
       payload.deliveryAddress,
-      payload.observations
+      payload.observations,
+      payload.dueDate || null
     ]
   );
 
@@ -334,10 +340,23 @@ const createFinancialTransaction = async (payload, db = pool) => {
   );
 };
 
+const findReceivables = async (db = pool) =>
+  execute(
+    db,
+    `${orderSummarySelect}
+     WHERE o.status != 'cancelled'
+     ${orderSummaryGroup}
+     HAVING pendingAmount > 0
+     ORDER BY (o.due_date IS NULL) ASC, o.due_date ASC, o.created_at ASC
+     LIMIT 100`,
+    []
+  );
+
 module.exports = {
   findAll,
   countAll,
   findById,
+  findReceivables,
   findCustomerById,
   findProductForUpdate,
   createOrder,

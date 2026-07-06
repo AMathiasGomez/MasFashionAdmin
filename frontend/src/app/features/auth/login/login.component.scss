@@ -4,32 +4,60 @@
   place-items: center;
   padding: 24px;
   background:
-    linear-gradient(rgba(246, 247, 244, 0.78), rgba(246, 247, 244, 0.96)),
+    linear-gradient(var(--app-page-overlay-start), var(--app-page-overlay-end)),
     url("https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=80") center / cover;
 }
 
 .login-panel {
   width: min(100%, 420px);
   padding: 32px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
+  border-radius: 16px;
+  background: var(--app-surface);
+  color: var(--app-text);
   border: 1px solid var(--app-border);
-  box-shadow: 0 24px 70px rgba(32, 39, 33, 0.18);
+  box-shadow: 0 24px 70px rgba(23, 16, 25, 0.28);
 }
 
 .brand-mark {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  background: var(--app-accent);
-  color: #fff;
-  font-weight: 800;
+  background: var(--app-primary);
+  color: var(--app-on-primary);
+  font-size: 22px;
 }
 
 h1 {
   font-size: 1.7rem;
   font-weight: 800;
+}
+
+.register-hint {
+  font-size: 13.5px;
+  color: var(--app-muted);
+}
+
+.register-hint a {
+  color: var(--app-primary-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--app-muted);
+  font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--app-border);
 }
 

@@ -4,6 +4,7 @@ const authenticate = require('../../middlewares/auth.middleware');
 const asyncHandler = require('../../middlewares/async-handler.middleware');
 const validateRequest = require('../../middlewares/validate.middleware');
 const { authorizePermissions } = require('../../middlewares/role.middleware');
+const { auditLogger } = require('../../middlewares/audit.middleware');
 const orderController = require('./order.controller');
 const orderValidator = require('./order.validator');
 
@@ -15,6 +16,12 @@ router.get(
   orderValidator.list,
   validateRequest,
   asyncHandler(orderController.listOrders)
+);
+
+router.get(
+  '/receivables',
+  authorizePermissions('orders.read'),
+  asyncHandler(orderController.listReceivables)
 );
 
 router.get(
@@ -30,6 +37,7 @@ router.post(
   authorizePermissions('orders.manage'),
   orderValidator.create,
   validateRequest,
+  auditLogger('create', 'order'),
   asyncHandler(orderController.createOrder)
 );
 
@@ -38,6 +46,7 @@ router.patch(
   authorizePermissions('orders.manage'),
   orderValidator.updateStatus,
   validateRequest,
+  auditLogger('status_change', 'order'),
   asyncHandler(orderController.updateStatus)
 );
 
@@ -46,6 +55,7 @@ router.post(
   authorizePermissions('orders.manage'),
   orderValidator.addPayment,
   validateRequest,
+  auditLogger('payment', 'order'),
   asyncHandler(orderController.addPayment)
 );
 
